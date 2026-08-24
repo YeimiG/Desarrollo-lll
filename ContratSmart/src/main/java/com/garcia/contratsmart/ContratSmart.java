@@ -4,6 +4,7 @@
 
 package com.garcia.contratsmart;
 
+import forms.frmServer;
 /**
  *
  * @author YEIMI
@@ -11,6 +12,8 @@ package com.garcia.contratsmart;
 public class ContratSmart {
 
     public static void main(String[] args) {
-        System.out.println("Hello World!");
+       java.awt.EventQueue.invokeLater(() -> {
+            new frmServer().setVisible(true);
+        });
     }
 }
