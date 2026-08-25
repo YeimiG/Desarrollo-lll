@@ -1,12 +1,8 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package forms;
- 
+
 import blockchain.BlockChain;
 import blockchain.Block;
-import blockchain.Transaction;
+import blockchain.SmartContract;
 import blockchain.Cifrado;
 
 import java.io.DataInputStream;
@@ -17,7 +13,7 @@ import java.net.Socket;
  *
  * @author owen7
  */
-public class frmServer extends javax.swing.JFrame{
+public class frmServer extends javax.swing.JFrame {
 
     private BlockChain bc;
     private Cifrado cifrador;
@@ -29,12 +25,12 @@ public class frmServer extends javax.swing.JFrame{
         
         // Regla 9: Inicializar Blockchain con Dificultad 3 (tres ceros '0')
         // Al instanciar BlockChain se mina automáticamente el Bloque Génesis
-        this.bc = new BlockChain(3, "0");
+        this.bc = new BlockChain(4, "0");
         this.cifrador = new Cifrado("ClaveSecretaServidorBlockChain");
         
-        jTextArea1.setText("=== SERVIDOR BLOCKCHAIN INICIALIZADO ===\n");
+        jTextArea1.setText("=== SERVIDOR SUCURSAL BLOCKCHAIN INICIALIZADO ===\n");
         jTextArea1.append("Bloque Génesis Minado con éxito.\n");
-        jTextArea1.append("Dificultad de Minado: 3 ceros '0'\n\n");
+        jTextArea1.append("Dificultad de Minado: 4 ceros '0'\n\n");
     }
 
     @SuppressWarnings("unchecked")
@@ -47,7 +43,7 @@ public class frmServer extends javax.swing.JFrame{
         jButton1 = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setTitle("Servidor Blockchain - Primer Parcial");
+        setTitle("Servidor Blockchain - Registro de Contrataciones");
 
         jTextArea1.setColumns(20);
         jTextArea1.setRows(10);
@@ -55,7 +51,7 @@ public class frmServer extends javax.swing.JFrame{
         jScrollPane1.setViewportView(jTextArea1);
 
         jLabel1.setFont(new java.awt.Font("FreeMono", 1, 24)); // NOI18N
-        jLabel1.setText("SERVIDOR BLOCKCHAIN");
+        jLabel1.setText("SERVIDOR SUCURSAL");
 
         jButton1.setText("Iniciar Escucha");
         jButton1.addActionListener(new java.awt.event.ActionListener() {
@@ -112,7 +108,8 @@ public class frmServer extends javax.swing.JFrame{
                     Socket socket = serverSocket.accept();
                     DataInputStream inputStream = new DataInputStream(socket.getInputStream());
 
-                    String rawMessage = inputStream.readUTF(); // Recibe mensaje ej: "ClienteA;ClienteB;150.0"
+                    // Formato esperado de contratación: "ID_CONTRATO;ID_EMP;NOMBRE_EMP;PUESTO;SALARIO;SUCURSAL"
+                    String rawMessage = inputStream.readUTF();
 
                     if (rawMessage.equalsIgnoreCase("EXIT")) {
                         jTextArea1.append(">> Comando EXIT recibido. Deteniendo Servidor.\n");
@@ -121,41 +118,44 @@ public class frmServer extends javax.swing.JFrame{
                     }
 
                     jTextArea1.append("--------------------------------------------------\n");
-                    jTextArea1.append(">> Transacción Recibida: " + rawMessage + "\n");
+                    jTextArea1.append(">> Solicitud de Contratación Recibida: " + rawMessage + "\n");
 
-                    // 1. Parsear datos de la petición
+                    // 1. Parsear datos del contrato laboral
                     String[] partes = rawMessage.split(";");
-                    String sender = partes.length > 0 ? partes[0] : "Anonimo";
-                    String receiver = partes.length > 1 ? partes[1] : "Servidor";
-                    double amount = partes.length > 2 ? Double.parseDouble(partes[2]) : 0.0;
+                    String idContrato = partes.length > 0 ? partes[0] : "CTR-000";
+                    String idEmpleado = partes.length > 1 ? partes[1] : "EMP-000";
+                    String nombreEmpleado = partes.length > 2 ? partes[2] : "Anonimo";
+                    String puesto = partes.length > 3 ? partes[3] : "General";
+                    double salario = partes.length > 4 ? Double.parseDouble(partes[4]) : 0.0;
+                    String sucursal = partes.length > 5 ? partes[5] : "Central";
 
-                    // 2. Regla 5: Cifrar las identidades con AES
-                    String senderCifrado = cifrador.encriptar(sender);
-                    String receiverCifrado = cifrador.encriptar(receiver);
+                    // 2. Cifrar datos sensibles del empleado con AES
+                    String idEmpCifrado = cifrador.encriptar(idEmpleado);
+                    String nombreCifrado = cifrador.encriptar(nombreEmpleado);
 
-                    jTextArea1.append(">> Identidades Cifradas (AES):\n");
-                    jTextArea1.append("   Remitente Cifrado: " + senderCifrado + "\n");
-                    jTextArea1.append("   Destinatario Cifrado: " + receiverCifrado + "\n");
+                    jTextArea1.append(">> Identidades del Empleado Cifradas (AES):\n");
+                    jTextArea1.append("   ID Empleado Cifrado: " + idEmpCifrado + "\n");
+                    jTextArea1.append("   Nombre Cifrado: " + nombreCifrado + "\n");
 
-                    // 3. Regla 6 y 10: Crear nuevo bloque encadenado
+                    // 3. Crear nuevo bloque encadenado y añadir el Smart Contract laboral
                     Block nuevoBloque = bc.createBlock();
-                    Transaction tx = new Transaction(nuevoBloque.getTransactions().size() + 1, senderCifrado, receiverCifrado, amount);
-                    nuevoBloque.addTransaction(tx);
+                    SmartContract contrato = new SmartContract(idContrato, idEmpCifrado, nombreCifrado, puesto, salario, sucursal);
+                    nuevoBloque.addSmartContract(contrato);
 
-                    // 4. Regla 2 y 3: Minar el nuevo bloque con Proof of Work
+                    // 4. Minar el nuevo bloque con Proof of Work
                     jTextArea1.append(">> Minando Bloque #" + nuevoBloque.getId() + "...\n");
                     long tInicio = System.currentTimeMillis();
                     bc.mineBlock(nuevoBloque);
                     long tFin = System.currentTimeMillis();
 
-                    jTextArea1.append("¡BLOQUE MINADO EXITOSAMENTE!\n");
+                    jTextArea1.append("¡CONTRATO MINADO Y REGISTRADO EN BLOCKCHAIN!\n");
                     jTextArea1.append("   Hash del Bloque: " + nuevoBloque.getHash() + "\n");
                     jTextArea1.append("   Hash Previo: " + nuevoBloque.getPreviousHash() + "\n");
                     jTextArea1.append("   Nonce Encontrado: " + nuevoBloque.getNonce() + "\n");
                     jTextArea1.append("   Tiempo de Minado: " + (tFin - tInicio) + " ms\n\n");
 
-                    // Regla 4: Mostrar el estado público de la cadena entera
-                    jTextArea1.append("=== ESTADO ACTUAL DE LA BLOCKCHAIN ===\n");
+                    // Mostrar el estado público de la cadena completa
+                    jTextArea1.append("=== REGISTRO GENERAL DE CONTRATACIONES ===\n");
                     jTextArea1.append(bc.toString());
                     jTextArea1.append("--------------------------------------------------\n\n");
 
