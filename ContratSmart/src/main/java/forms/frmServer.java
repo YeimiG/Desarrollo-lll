@@ -24,8 +24,7 @@ public class frmServer extends javax.swing.JFrame {
         initComponents();
         this.setLocationRelativeTo(null); // Centrar en pantalla
         
-        // Regla 9: Inicializar Blockchain con Dificultad 3 (tres ceros '0')
-        // Al instanciar BlockChain se mina automáticamente el Bloque Génesis
+        // Inicializar Blockchain con Dificultad 4
         this.bc = new BlockChain(4, "0");
         this.cifrador = new Cifrado("ClaveSecretaServidorBlockChain");
         
@@ -35,13 +34,13 @@ public class frmServer extends javax.swing.JFrame {
     }
 
     @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">                          
     private void initComponents() {
 
         jScrollPane1 = new javax.swing.JScrollPane();
         jTextArea1 = new javax.swing.JTextArea();
         jLabel1 = new javax.swing.JLabel();
         jButton1 = new javax.swing.JButton();
+        jButton2 = new javax.swing.JButton(); // Botón para abrir sucursal
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Servidor Blockchain - Registro de Contrataciones");
@@ -51,7 +50,7 @@ public class frmServer extends javax.swing.JFrame {
         jTextArea1.setEditable(false);
         jScrollPane1.setViewportView(jTextArea1);
 
-        jLabel1.setFont(new java.awt.Font("FreeMono", 1, 24)); // NOI18N
+        jLabel1.setFont(new java.awt.Font("FreeMono", 1, 24));
         jLabel1.setText("SERVIDOR SUCURSAL");
 
         jButton1.setText("Iniciar Escucha");
@@ -61,6 +60,14 @@ public class frmServer extends javax.swing.JFrame {
             }
         });
 
+        jButton2.setText("Abrir Sucursal");
+        jButton2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton2ActionPerformed(evt);
+            }
+        });
+
+        // Configuración visual del Layout incluyendo ambos botones
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -71,6 +78,8 @@ public class frmServer extends javax.swing.JFrame {
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jLabel1)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jButton2)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(jButton1))
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 500, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(24, Short.MAX_VALUE))
@@ -81,15 +90,24 @@ public class frmServer extends javax.swing.JFrame {
                 .addGap(16, 16, 16)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel1)
-                    .addComponent(jButton1))
+                    .addComponent(jButton1)
+                    .addComponent(jButton2))
                 .addGap(18, 18, 18)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(20, Short.MAX_VALUE))
         );
 
         pack();
-    }// </editor-fold>                        
+    }
 
+    // Acción del botón Abrir Sucursal
+    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {                                         
+        frmPrincipal ventanaSucursal = new frmPrincipal();
+        ventanaSucursal.setVisible(true);
+        jTextArea1.append(">> Nueva ventana de Sucursal (Nodo) iniciada.\n");
+    }
+
+    // Acción del botón Iniciar Escucha
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {                                         
         if (escuchando) {
             jTextArea1.append("El servidor ya está escuchando en el puerto 7000...\n");
@@ -100,18 +118,15 @@ public class frmServer extends javax.swing.JFrame {
         jButton1.setEnabled(false);
         jButton1.setText("Escuchando...");
 
-        // Hilo en segundo plano para no congelar la interfaz Swing durante el minado
         new Thread(() -> {
             try (ServerSocket serverSocket = new ServerSocket(7000)) {
                 jTextArea1.append(">> Servidor escuchando peticiones en puerto 7000...\n\n");
 
                 while (true) {
                     Socket socket = serverSocket.accept();
-                        DataInputStream inputStream =
-                            new DataInputStream(socket.getInputStream());
-                        DataOutputStream outputStream =
-                            new DataOutputStream(socket.getOutputStream());
-                    // Formato esperado de contratación: "ID_CONTRATO;ID_EMP;NOMBRE_EMP;PUESTO;SALARIO;SUCURSAL"
+                    DataInputStream inputStream = new DataInputStream(socket.getInputStream());
+                    DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());
+                    
                     String rawMessage = inputStream.readUTF();
 
                     if (rawMessage.equalsIgnoreCase("EXIT")) {
@@ -120,55 +135,82 @@ public class frmServer extends javax.swing.JFrame {
                         break;
                     }
 
-                    jTextArea1.append("--------------------------------------------------\n");
-                    jTextArea1.append(">> Solicitud de Contratación Recibida: " + rawMessage + "\n");
+                    // Soporte para búsqueda de contratos
+                    if (rawMessage.startsWith("BUSCAR;")) {
+                        String idBuscado = rawMessage.split(";")[1];
+                        jTextArea1.append(">> Buscando contrato en la Blockchain para ID: " + idBuscado + "\n");
+                        
+                        String idCifrado = cifrador.encriptar(idBuscado);
+                        boolean encontrado = false;
+                        
+                        for (Block b : bc.getChain()) {
+                            for (SmartContract sc : b.getSmartContracts()) {
+                                if (sc.getIdEmpleado().equals(idCifrado)) {
+                                    String nombreDescifrado = cifrador.desencriptar(sc.getNombreEmpleado());
+                                    String respuesta = "ENCONTRADO;" + sc.getIdContrato() + ";" + nombreDescifrado + ";" + sc.getSucursal() + ";" + b.getId() + ";" + b.getHash();
+                                    outputStream.writeUTF(respuesta);
+                                    outputStream.flush();
+                                    
+                                    encontrado = true;
+                                    jTextArea1.append("   - ¡Contrato encontrado en Bloque #" + b.getId() + "!\n");
+                                    break;
+                                }
+                            }
+                            if (encontrado) break;
+                        }
+                        
+                        if (!encontrado) {
+                            outputStream.writeUTF("NO_ENCONTRADO");
+                            outputStream.flush();
+                            jTextArea1.append("   - Contrato no encontrado.\n");
+                        }
 
-                    // 1. Parsear datos del contrato laboral
-                    String[] partes = rawMessage.split(";");
-                    String idContrato = partes.length > 0 ? partes[0] : "CTR-000";
-                    String idEmpleado = partes.length > 1 ? partes[1] : "EMP-000";
-                    String nombreEmpleado = partes.length > 2 ? partes[2] : "Anonimo";
-                    String puesto = partes.length > 3 ? partes[3] : "General";
-                    double salario = partes.length > 4 ? Double.parseDouble(partes[4]) : 0.0;
-                    String sucursal = partes.length > 5 ? partes[5] : "Central";
+                    } else {
+                        // Creación y minería de contratos
+                        jTextArea1.append("--------------------------------------------------\n");
+                        jTextArea1.append(">> Solicitud de Contratación Recibida: " + rawMessage + "\n");
 
-                    // 2. Cifrar datos sensibles del empleado con AES
-                    String idEmpCifrado = cifrador.encriptar(idEmpleado);
-                    String nombreCifrado = cifrador.encriptar(nombreEmpleado);
+                        String[] partes = rawMessage.split(";");
+                        String idContrato = partes.length > 0 ? partes[0] : "CTR-000";
+                        String idEmpleado = partes.length > 1 ? partes[1] : "EMP-000";
+                        String nombreEmpleado = partes.length > 2 ? partes[2] : "Anonimo";
+                        String puesto = partes.length > 3 ? partes[3] : "General";
+                        double salario = partes.length > 4 ? Double.parseDouble(partes[4]) : 0.0;
+                        String sucursal = partes.length > 5 ? partes[5] : "Central";
 
-                    jTextArea1.append(">> Identidades del Empleado Cifradas (AES):\n");
-                    jTextArea1.append("   ID Empleado Cifrado: " + idEmpCifrado + "\n");
-                    jTextArea1.append("   Nombre Cifrado: " + nombreCifrado + "\n");
+                        String idEmpCifrado = cifrador.encriptar(idEmpleado);
+                        String nombreCifrado = cifrador.encriptar(nombreEmpleado);
 
-                    // 3. Crear nuevo bloque encadenado y añadir el Smart Contract laboral
-                    Block nuevoBloque = bc.createBlock();
-                    SmartContract contrato = new SmartContract(idContrato, idEmpCifrado, nombreCifrado, puesto, salario, sucursal);
-                    nuevoBloque.addSmartContract(contrato);
+                        jTextArea1.append(">> Identidades del Empleado Cifradas (AES):\n");
+                        jTextArea1.append("   ID Empleado Cifrado: " + idEmpCifrado + "\n");
+                        jTextArea1.append("   Nombre Cifrado: " + nombreCifrado + "\n");
 
-                    // 4. Minar el nuevo bloque con Proof of Work
-                    jTextArea1.append(">> Minando Bloque #" + nuevoBloque.getId() + "...\n");
-                    long tInicio = System.currentTimeMillis();
-                    bc.mineBlock(nuevoBloque);
-                    long tFin = System.currentTimeMillis();
+                        Block nuevoBloque = bc.createBlock();
+                        SmartContract contrato = new SmartContract(idContrato, idEmpCifrado, nombreCifrado, puesto, salario, sucursal);
+                        nuevoBloque.addSmartContract(contrato);
 
-                    String respuesta =
-                            "OK;"
-                            + nuevoBloque.getId() + ";"
-                            + nuevoBloque.getPreviousHash() + ";"
-                            + nuevoBloque.getHash() + ";"
-                            + nuevoBloque.getNonce() + ";"
-                            + 4 + ";"
-                            + (tFin - tInicio) + ";"
-                            + idEmpCifrado + ";"
-                            + nombreCifrado;
+                        jTextArea1.append(">> Minando Bloque #" + nuevoBloque.getId() + "...\n");
+                        long tInicio = System.currentTimeMillis();
+                        bc.mineBlock(nuevoBloque);
+                        long tFin = System.currentTimeMillis();
 
-                    outputStream.writeUTF(respuesta);
-                    outputStream.flush();
+                        String respuesta = "OK;"
+                                + nuevoBloque.getId() + ";"
+                                + nuevoBloque.getPreviousHash() + ";"
+                                + nuevoBloque.getHash() + ";"
+                                + nuevoBloque.getNonce() + ";"
+                                + 4 + ";"
+                                + (tFin - tInicio) + ";"
+                                + idEmpCifrado + ";"
+                                + nombreCifrado;
 
-                    // Mostrar el estado público de la cadena completa
-                    jTextArea1.append("=== REGISTRO GENERAL DE CONTRATACIONES ===\n");
-                    jTextArea1.append(bc.toString());
-                    jTextArea1.append("--------------------------------------------------\n\n");
+                        outputStream.writeUTF(respuesta);
+                        outputStream.flush();
+
+                        jTextArea1.append("=== REGISTRO GENERAL DE CONTRATACIONES ===\n");
+                        jTextArea1.append(bc.toString());
+                        jTextArea1.append("--------------------------------------------------\n\n");
+                    }
 
                     inputStream.close();
                     socket.close();
@@ -185,10 +227,10 @@ public class frmServer extends javax.swing.JFrame {
         });
     }
 
-    // Variables declaration - do not modify                     
+    // Variables declaration                     
     private javax.swing.JButton jButton1;
+    private javax.swing.JButton jButton2;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTextArea jTextArea1;
-    // End of variables declaration                   
 }

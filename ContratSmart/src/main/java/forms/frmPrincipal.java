@@ -21,6 +21,8 @@ public class frmPrincipal extends javax.swing.JFrame {
      */
     public frmPrincipal() {
         initComponents();
+        jComboBox1.removeAllItems();
+        jTextField2.setText("127.0.0.1");
     }
 
     /**
@@ -197,6 +199,54 @@ public class frmPrincipal extends javax.swing.JFrame {
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
         // TODO add your handling code here:
+        if(jComboBox1.getItemCount() == 0){
+            JOptionPane.showMessageDialog(this, "Primero debe crear una sucursal.");
+            return;
+        }
+
+        String idEmpleado = jTextField3.getText().trim(); // Usamos Contratista como ID del Empleado
+        String nombreEmpleado = jTextField4.getText().trim(); // Usamos Contratado como Nombre
+        String sucursal = jComboBox1.getSelectedItem().toString();
+        
+        if(idEmpleado.isEmpty() || nombreEmpleado.isEmpty()){
+            JOptionPane.showMessageDialog(this, "Llene los datos del contratista y contratado.");
+            return;
+        }
+
+        // Generamos datos automáticos para los campos que no están en tu diseño de UI
+        String idContrato = "CTR-" + (System.currentTimeMillis() % 10000); 
+        String puesto = "General"; 
+        double salario = 1000.00;
+
+        // Armamos la cadena tal como la espera el servidor
+        String mensaje = idContrato + ";" + idEmpleado + ";" + nombreEmpleado + ";" + puesto + ";" + salario + ";" + sucursal;
+        
+        // Usamos la IP escrita en la UI, o la de por defecto si está vacía
+        String ipDestino = jTextField2.getText().isEmpty() ? ipServidor : jTextField2.getText();
+
+        try {
+            // Conexión por Socket al servidor
+            Socket socket = new Socket(ipDestino, puertoServidor);
+            DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+            DataInputStream in = new DataInputStream(socket.getInputStream());
+            
+            // Enviamos el contrato
+            out.writeUTF(mensaje);
+            out.flush();
+            
+            // Recibimos la respuesta del servidor (Bloque minado)
+            String respuesta = in.readUTF();
+            JOptionPane.showMessageDialog(this, "¡Contrato minado y cifrado en la Blockchain con éxito!\n\nDatos del Bloque:\n" + respuesta);
+            
+            socket.close();
+            
+            // Limpiamos los campos
+            jTextField3.setText("");
+            jTextField4.setText("");
+            
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error de conexión al servidor: " + e.getMessage() + "\n¿Aseguraste darle a 'Iniciar Escucha' en el servidor?");
+        }
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void jTextField2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField2ActionPerformed
@@ -205,6 +255,20 @@ public class frmPrincipal extends javax.swing.JFrame {
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         // TODO add your handling code here:
+        String nombreSucursal = jTextField1.getText().trim();
+        String ip = jTextField2.getText().trim();
+        
+        if(nombreSucursal.isEmpty() || ip.isEmpty()){
+            JOptionPane.showMessageDialog(this, "Por favor, llene el nombre de la sucursal y la IP.");
+            return;
+        }
+        
+        // Agrega la sucursal al ComboBox
+        jComboBox1.addItem(nombreSucursal);
+        JOptionPane.showMessageDialog(this, "Sucursal '" + nombreSucursal + "' creada con éxito.");
+        
+        // Limpia el campo de texto
+        jTextField1.setText("");
     }//GEN-LAST:event_jButton1ActionPerformed
 
     /**
