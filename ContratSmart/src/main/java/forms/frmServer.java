@@ -6,6 +6,7 @@ import blockchain.SmartContract;
 import blockchain.Cifrado;
 
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -106,8 +107,10 @@ public class frmServer extends javax.swing.JFrame {
 
                 while (true) {
                     Socket socket = serverSocket.accept();
-                    DataInputStream inputStream = new DataInputStream(socket.getInputStream());
-
+                        DataInputStream inputStream =
+                            new DataInputStream(socket.getInputStream());
+                        DataOutputStream outputStream =
+                            new DataOutputStream(socket.getOutputStream());
                     // Formato esperado de contratación: "ID_CONTRATO;ID_EMP;NOMBRE_EMP;PUESTO;SALARIO;SUCURSAL"
                     String rawMessage = inputStream.readUTF();
 
@@ -148,11 +151,19 @@ public class frmServer extends javax.swing.JFrame {
                     bc.mineBlock(nuevoBloque);
                     long tFin = System.currentTimeMillis();
 
-                    jTextArea1.append("¡CONTRATO MINADO Y REGISTRADO EN BLOCKCHAIN!\n");
-                    jTextArea1.append("   Hash del Bloque: " + nuevoBloque.getHash() + "\n");
-                    jTextArea1.append("   Hash Previo: " + nuevoBloque.getPreviousHash() + "\n");
-                    jTextArea1.append("   Nonce Encontrado: " + nuevoBloque.getNonce() + "\n");
-                    jTextArea1.append("   Tiempo de Minado: " + (tFin - tInicio) + " ms\n\n");
+                    String respuesta =
+                            "OK;"
+                            + nuevoBloque.getId() + ";"
+                            + nuevoBloque.getPreviousHash() + ";"
+                            + nuevoBloque.getHash() + ";"
+                            + nuevoBloque.getNonce() + ";"
+                            + 4 + ";"
+                            + (tFin - tInicio) + ";"
+                            + idEmpCifrado + ";"
+                            + nombreCifrado;
+
+                    outputStream.writeUTF(respuesta);
+                    outputStream.flush();
 
                     // Mostrar el estado público de la cadena completa
                     jTextArea1.append("=== REGISTRO GENERAL DE CONTRATACIONES ===\n");
