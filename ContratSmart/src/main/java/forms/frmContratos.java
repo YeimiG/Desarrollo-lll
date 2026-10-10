@@ -13,7 +13,13 @@ import javax.swing.JOptionPane;
  * @author YEIMI
  */
 public class frmContratos extends javax.swing.JFrame {
-private int puertoServidor = 7000;
+    // Variable para almacenar el puerto que se recibe
+    public int puertoServidor = 12345; // Puedes poner un valor por defecto
+
+    // Método que frmPrincipal está intentando llamar
+    public void setPuertoServidor(int puerto) {
+        this.puertoServidor = puerto;
+    }
     /**
      * Creates new form frmContratos
      */
@@ -86,7 +92,7 @@ private int puertoServidor = 7000;
                 .addContainerGap())
         );
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
         jPanel2.setBackground(new java.awt.Color(0, 204, 204));
 
@@ -186,6 +192,9 @@ private int puertoServidor = 7000;
                 .addContainerGap())
         );
 
+        jLabel8.getAccessibleContext().setAccessibleParent(this);
+        jPanel3.getAccessibleContext().setAccessibleParent(this);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -222,20 +231,18 @@ private int puertoServidor = 7000;
         double salario = 1000.00;
 
         String mensaje = idContrato + ";" + idEmpleado + ";" + nombreEmpleado + ";" + puesto + ";" + salario + ";" + sucursal;
-        String ipDestino = frmPrincipal.ipGlobal;
+        String ipDestino = frmPrincipal.mapaIPs.getOrDefault(sucursal, "127.0.0.1");
 
-        try {
-            Socket socket = new Socket(ipDestino, puertoServidor);
-            DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-            DataInputStream in = new DataInputStream(socket.getInputStream());
+        // MEJORA: Try-with-resources para asegurar el cierre del Socket
+        try (Socket socket = new Socket(ipDestino, puertoServidor);
+             DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+             DataInputStream in = new DataInputStream(socket.getInputStream())) {
             
             out.writeUTF(mensaje);
             out.flush();
             
             String respuesta = in.readUTF();
             JOptionPane.showMessageDialog(this, "¡Contrato minado y cifrado en la Blockchain con éxito!\n\nDatos del Bloque:\n" + respuesta);
-            
-            socket.close();
             
             jTextField3.setText("");
             jTextField4.setText("");

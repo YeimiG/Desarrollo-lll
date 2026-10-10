@@ -15,10 +15,15 @@ import javax.swing.JOptionPane;
 
 public class frmPrincipal extends javax.swing.JFrame {
     public static java.util.List<String> listaSucursales = new java.util.ArrayList<>();
-    public static String ipGlobal = "127.0.0.1";
+    public static java.util.Map<String, String> mapaIPs = new java.util.HashMap<>();
     
   private String ipServidor = "127.0.0.1";
     private int puertoServidor = 7000;
+    
+    //// MODIFICADO: Variable y Método Setter para gestionar el Puerto Dinámico
+    public void setPuertoServidor(int puerto) {
+        this.puertoServidor = puerto;
+    }
     /**
      * Creates new form frmPrincipal
      */
@@ -229,7 +234,7 @@ public class frmPrincipal extends javax.swing.JFrame {
     
     // Guardamos la sucursal en la lista global de frmPrincipal
     listaSucursales.add(nombreSucursal);
-    ipGlobal = ip;
+    mapaIPs.put(nombreSucursal, ip);
     
     // Agregamos al ComboBox de la ventana principal
     jComboBox1.addItem(nombreSucursal);
@@ -240,6 +245,11 @@ public class frmPrincipal extends javax.swing.JFrame {
 
     private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
   frmContratos ventanaContratos = new frmContratos();
+  
+    // MODIFICADO: Transmitir el puerto asignado a la ventana de Contratos
+    // =========================================================================
+    ventanaContratos.setPuertoServidor(this.puertoServidor);
+        
     ventanaContratos.cargarSucursales(); // Asegura refrescar el combo antes de mostrar
     ventanaContratos.setVisible(true);
     }//GEN-LAST:event_jButton4ActionPerformed
