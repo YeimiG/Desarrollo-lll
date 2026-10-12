@@ -7,7 +7,7 @@ public class BlockChain {
 
     private List<Block> chain;
     private int complexity;
-    private String proofOfWork;
+    private String proofOfWork; 
 
     public BlockChain(int complexity, String proofOfWork) {
         this.chain = new ArrayList<>();

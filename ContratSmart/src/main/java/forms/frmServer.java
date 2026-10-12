@@ -4,6 +4,7 @@ import blockchain.BlockChain;
 import blockchain.Block;
 import blockchain.SmartContract;
 import blockchain.Cifrado;
+import blockchain.BlockStorage;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -22,9 +23,8 @@ public class frmServer extends javax.swing.JFrame {
 
     public frmServer() {
         initComponents();
-        this.setLocationRelativeTo(null); // Centrar en pantalla
+        this.setLocationRelativeTo(null);
         
-        // Inicializar Blockchain con Dificultad 4
         this.bc = new BlockChain(4, "0");
         this.cifrador = new Cifrado("ClaveSecretaServidorBlockChain");
         
@@ -40,7 +40,7 @@ public class frmServer extends javax.swing.JFrame {
         jTextArea1 = new javax.swing.JTextArea();
         jLabel1 = new javax.swing.JLabel();
         jButton1 = new javax.swing.JButton();
-        jButton2 = new javax.swing.JButton(); // Botón para abrir sucursal
+        jButton2 = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Servidor Blockchain - Registro de Contrataciones");
@@ -67,7 +67,6 @@ public class frmServer extends javax.swing.JFrame {
             }
         });
 
-        // Configuración visual del Layout incluyendo ambos botones
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -100,14 +99,13 @@ public class frmServer extends javax.swing.JFrame {
         pack();
     }
 
-    // Acción del botón Abrir Sucursal
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {                                         
         frmPrincipal ventanaSucursal = new frmPrincipal();
+        ventanaSucursal.setPuertoServidor(7000);
         ventanaSucursal.setVisible(true);
         jTextArea1.append(">> Nueva ventana de Sucursal (Nodo) iniciada.\n");
     }
 
-    // Acción del botón Iniciar Escucha
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {                                         
         if (escuchando) {
             jTextArea1.append("El servidor ya está escuchando en el puerto 7000...\n");
@@ -119,6 +117,8 @@ public class frmServer extends javax.swing.JFrame {
         jButton1.setText("Escuchando...");
 
         new Thread(() -> {
+            BlockStorage storage = new BlockStorage();
+
             try (ServerSocket serverSocket = new ServerSocket(7000)) {
                 jTextArea1.append(">> Servidor escuchando peticiones en puerto 7000...\n\n");
 
@@ -135,7 +135,6 @@ public class frmServer extends javax.swing.JFrame {
                         break;
                     }
 
-                    // Soporte para búsqueda de contratos
                     if (rawMessage.startsWith("BUSCAR;")) {
                         String idBuscado = rawMessage.split(";")[1];
                         jTextArea1.append(">> Buscando contrato en la Blockchain para ID: " + idBuscado + "\n");
@@ -165,8 +164,18 @@ public class frmServer extends javax.swing.JFrame {
                             jTextArea1.append("   - Contrato no encontrado.\n");
                         }
 
+                    // =========================================================================
+                    // UNICO CAMBIO AGREGADO: Manejar la señal de propagación sin volver a minar
+                    // =========================================================================
+                    } else if (rawMessage.startsWith("PROPAGAR_BLOQUE;")) {
+                        String[] partes = rawMessage.split(";");
+                        String idBloque = partes.length > 1 ? partes[1] : "?";
+                        String hashBloque = partes.length > 2 ? partes[2] : "?";
+                        
+                        jTextArea1.append(">> [NOTIFICACIÓN P2P] El otro nodo minó el Bloque #" + idBloque + " (" + hashBloque + ")\n\n");
+                    // =========================================================================
+
                     } else {
-                        // Creación y minería de contratos
                         jTextArea1.append("--------------------------------------------------\n");
                         jTextArea1.append(">> Solicitud de Contratación Recibida: " + rawMessage + "\n");
 
@@ -193,6 +202,9 @@ public class frmServer extends javax.swing.JFrame {
                         long tInicio = System.currentTimeMillis();
                         bc.mineBlock(nuevoBloque);
                         long tFin = System.currentTimeMillis();
+
+                        storage.saveBlock(nuevoBloque, cifrador);
+                        jTextArea1.append(">> Bloque persistido en disco: ./blockchain_data/" + nuevoBloque.getHash() + ".json\n");
 
                         String respuesta = "OK;"
                                 + nuevoBloque.getId() + ";"
@@ -227,7 +239,6 @@ public class frmServer extends javax.swing.JFrame {
         });
     }
 
-    // Variables declaration                     
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
     private javax.swing.JLabel jLabel1;

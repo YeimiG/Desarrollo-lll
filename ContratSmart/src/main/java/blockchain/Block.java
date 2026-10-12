@@ -24,7 +24,7 @@ public class Block implements Serializable {
         this.hash = generateHash();
     }
 
-    // Calcula el Hash SHA-256 del bloque completo
+    // Calcula el algoritmo criptografico Hash SHA-256 del bloque completo
     public String generateHash() {
         String dataToHash = id + Long.toString(timeStamp) + previousHash + Integer.toString(nonce) + smartContracts.toString();
         try {
