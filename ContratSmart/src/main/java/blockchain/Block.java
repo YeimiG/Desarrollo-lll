@@ -18,9 +18,12 @@ public class Block implements Serializable {
     private List<SmartContract> smartContracts;
 
     public Block(int id, String previousHash) {
+        this (id, previousHash, new Date().getTime());   
+    }
+    public Block(int id, String previousHash, Long timeStamp){
         this.id = id;
         this.previousHash = previousHash;
-        this.timeStamp = new Date().getTime();
+        this.timeStamp = timeStamp;
         this.smartContracts = new ArrayList<>();
         this.nonce = 0;
         this.hash = generateHash();

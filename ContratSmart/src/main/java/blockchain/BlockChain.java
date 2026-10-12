@@ -18,9 +18,17 @@ public class BlockChain {
 
     // Regla 9: El bloque génesis solo guarda la marca temporal y el hash base
     private void createGenesis() {
-        Block genesis = new Block(0, "0000000000000000000000000000000000000000000000000000000000000000");
+      String hashBase = "0000000000000000000000000000000000000000000000000000000000000000";
+       //todos los nodos deben utilizar los mismos datos 
+       Block genesis = new Block(0, hashBase, 0L);
+       
+       //minar antes    de incorporar el genesis a la cadena.
+       mineBlock(genesis);
+       
+       this.chain.add(genesis);
+        /** Block genesis = new Block(0, "0000000000000000000000000000000000000000000000000000000000000000");
         this.chain.add(genesis);
-        mineBlock(genesis);
+        mineBlock(genesis);**/
     }
 
     // Regla 10: Crea un nuevo bloque enlazado al último hash registrado
@@ -33,11 +41,25 @@ public class BlockChain {
 
     // Regla 3 y 6: Minado del bloque mediante prueba de trabajo (Proof of Work)
     public void mineBlock(Block block) {
-        String target = new String(new char[complexity]).replace('\0', proofOfWork.charAt(0));
+        String target = new String (
+            new char [complexity]).replace('\0',proofOfWork.charAt(0));
+        
+        while(true){
+            //recalcular siempre con los datos actuales del bloque
+            String calculatedHash = block .generateHash();
+            block.setHash(calculatedHash);
+            //si cumple la dificultad, la mineria termina.
+            if (calculatedHash.startsWith(target)){
+                break;
+            }
+            //si no cumple ,probar con otro nonce.
+            block.setNonce(block.getNonce()+1);
+        }
+        /**String target = new String(new char[complexity]).replace('\0', proofOfWork.charAt(0));
         while (!block.getHash().substring(0, complexity).equals(target)) {
             block.setNonce(block.getNonce() + 1);
             block.setHash(block.generateHash());
-        }
+        }**/
     }
 
     // Valida un bloque externo (ej. recibido de otra sucursal) antes de añadirlo
