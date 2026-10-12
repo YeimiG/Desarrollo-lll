@@ -113,4 +113,44 @@ public class BlockChain {
         }
         return sb.toString();
     }
+    
+    
+public boolean isValidBlock(Block block, Block previousBlock) {
+
+    if (block == null) {
+        return false;
+    }
+
+    //Verificar que el hash corresponda a los datos actuales.
+    String calculatedHash = block.generateHash();
+
+    if (block.getHash() == null
+            || !calculatedHash.equals(block.getHash())) {
+        return false;
+    }
+
+    //Verificar la dificultad de la prueba de trabajo.
+    String target = new String(
+        new char[complexity]
+    ).replace('\0', proofOfWork.charAt(0));
+
+    if (!block.getHash().startsWith(target)) {
+        return false;
+    }
+
+    //Si existe un bloque anterior, comprobar la continuidad.
+        if (previousBlock != null) {
+
+            if (block.getId() != previousBlock.getId() + 1) {
+                return false;
+            }
+
+            if (block.getPreviousHash() == null
+                || !block.getPreviousHash()
+                    .equals(previousBlock.getHash())) {
+                return false;
+            }
+        }
+        return true;
+    }
 }
