@@ -31,6 +31,23 @@ public class frmServerStatic1 extends javax.swing.JFrame {
         this.bc = new BlockChain(4, "0");
         this.cifrador = new Cifrado("ClaveSecretaServidorBlockChain");
         
+        //Prueba Validadicion de bloque 
+        /*System.out.println("===Inicio pruebas de validadion===");
+        Block genesis = bc.getChain().get(0);
+        Block testBlock = new Block(1, genesis.getHash());
+        bc.mineBlock(testBlock);
+        System.out.println("hash del genesis:" + genesis.getHash());
+        System.out.println("Hash del bloque de prueba: " + testBlock.getHash());
+        boolean resultadoValido = bc.isValidBlock(testBlock, genesis);
+
+        System.out.println("PRUEBA 1 - BLOQUE VALIDO: " + resultadoValido);
+
+        // Alterar el nonce sin volver a minar el bloque.
+        testBlock.setNonce(testBlock.getNonce() + 1);
+        boolean resultadoAlterado = bc.isValidBlock(testBlock, genesis);
+        System.out.println("PRUEBA 2 - BLOQUE ALTERADO: " + resultadoAlterado);
+        System.out.println("=== FIN PRUEBAS DE VALIDACION ===");
+        */
         jTextArea1.setText("=== SERVIDOR SECUNDARIO (NODO 2) BLOCKCHAIN INICIALIZADO ===\n");
         jTextArea1.append("Bloque Génesis Minado con éxito.\n");
         jTextArea1.append("Escuchando en Puerto Secundario: 7001\n");
@@ -252,6 +269,7 @@ public class frmServerStatic1 extends javax.swing.JFrame {
     }
 
     public static void main(String args[]) {
+        System.out.println("PRUEBA: SE EJECUTA frmServerStatic1");
         java.awt.EventQueue.invokeLater(() -> {
             new frmServerStatic1().setVisible(true);
         });

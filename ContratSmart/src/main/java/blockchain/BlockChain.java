@@ -118,16 +118,19 @@ public class BlockChain {
 public boolean isValidBlock(Block block, Block previousBlock) {
 
     if (block == null) {
+        System.out.println("FALLO: bloque nulo");
         return false;
     }
 
     //Verificar que el hash corresponda a los datos actuales.
     String calculatedHash = block.generateHash();
-
-    if (block.getHash() == null
-            || !calculatedHash.equals(block.getHash())) {
+        if (block.getHash() == null
+        || !calculatedHash.equals(block.getHash())) {
+           System.out.println("FALLO: hash diferente");
+           System.out.println("Hash calculado: " + calculatedHash);
+           System.out.println("Hash guardado: " + block.getHash());
         return false;
-    }
+}
 
     //Verificar la dificultad de la prueba de trabajo.
     String target = new String(
@@ -142,15 +145,18 @@ public boolean isValidBlock(Block block, Block previousBlock) {
         if (previousBlock != null) {
 
             if (block.getId() != previousBlock.getId() + 1) {
+                System.out.println("FALLO: ID no consecutivo");
                 return false;
             }
 
             if (block.getPreviousHash() == null
                 || !block.getPreviousHash()
                     .equals(previousBlock.getHash())) {
+                System.out.println("FALLO: hash anterior diferente");
                 return false;
             }
         }
+        System.out.println("BLOQUE VALIDO");
         return true;
     }
 }
