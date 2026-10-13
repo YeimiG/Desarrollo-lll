@@ -34,9 +34,14 @@ public class BlockChain {
     // Regla 10: Crea un nuevo bloque enlazado al último hash registrado
     public Block createBlock() {
         Block lastBlock = getLastBlock();
-        Block newBlock = new Block(chain.size(), lastBlock.getHash());
-        this.chain.add(newBlock);
+        Block newBlock = new Block(
+                lastBlock.getId() +1,
+                lastBlock.getHash()
+        );
         return newBlock;
+        /*Block newBlock = new Block(chain.size(), lastBlock.getHash());
+        this.chain.add(newBlock);
+        return newBlock;*/
     }
 
     // Regla 3 y 6: Minado del bloque mediante prueba de trabajo (Proof of Work)
@@ -64,7 +69,16 @@ public class BlockChain {
 
     // Valida un bloque externo (ej. recibido de otra sucursal) antes de añadirlo
     public boolean addProvedBlock(Block block) {
-        String target = new String(new char[complexity]).replace('\0', proofOfWork.charAt(0));
+        Block lastBlock = getLastBlock();
+        
+        if (!isValidBlock(block,lastBlock)){
+            System.out.println("BLOQUE RECHAZADO: no supera la validación.");
+            return false;
+        }
+        this.chain.add(block);
+        System.out.println("BLOQUE ACEPTADO: agregado a la cadena.");
+        return true;
+        /*    String target = new String(new char[complexity]).replace('\0', proofOfWork.charAt(0));
         
         // Verifica que el bloque apunte al hash correcto y cumpla la dificultad
         if (block.getPreviousHash().equals(getLastBlock().getHash()) && 
@@ -75,6 +89,7 @@ public class BlockChain {
             return true;
         }
         return false;
+    */
     }
 
     // Reporte de contratos de un bloque en específico

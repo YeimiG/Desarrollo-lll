@@ -31,6 +31,39 @@ public class frmServerStatic1 extends javax.swing.JFrame {
         this.bc = new BlockChain(4, "0");
         this.cifrador = new Cifrado("ClaveSecretaServidorBlockChain");
         
+        //Prueba bloque Invalido sea rechasado
+        /*
+        System.out.println("\n=== PRUEBA DE RECHAZO ===");
+        int tamanoAntesRechazo = bc.size();
+
+        // Crear un bloque pendiente.
+        Block bloqueInvalido = bc.createBlock();
+        // Alterar su hash guardado para que ya no coincida
+        // con el hash calculado a partir de su contenido.
+        bloqueInvalido.setHash("hash_invalido");
+        boolean aceptadoInvalido = bc.addProvedBlock(bloqueInvalido);
+        System.out.println("Bloque inválido aceptado: " + aceptadoInvalido);
+        System.out.println("Tamaño antes: " + tamanoAntesRechazo);
+        System.out.println("Tamaño después: " + bc.size());
+        System.out.println("=== FIN PRUEBA DE RECHAZO ===");
+        */
+        
+        // Prueba Aseptacion  
+        /*
+        System.out.println("=== PRUEBA DE ACEPTACION ===");
+        int sizeInicial = bc.size();
+        // Crear un bloque pendiente.
+        Block bloquePrueba = bc.createBlock();
+        System.out.println("Tamaño inicial: " + sizeInicial);
+        System.out.println("Tamaño tras crear: " + bc.size());
+        // Minar el bloque.
+        bc.mineBlock(bloquePrueba);
+        // Intentar aceptarlo.
+        boolean aceptado = bc.addProvedBlock(bloquePrueba);
+        System.out.println("Bloque aceptado: " + aceptado);
+        System.out.println("Tamaño final: " + bc.size());
+        System.out.println("=== FIN PRUEBA ===");
+        */
         //Prueba Validadicion de bloque 
         /*System.out.println("===Inicio pruebas de validadion===");
         Block genesis = bc.getChain().get(0);
@@ -269,7 +302,7 @@ public class frmServerStatic1 extends javax.swing.JFrame {
     }
 
     public static void main(String args[]) {
-        System.out.println("PRUEBA: SE EJECUTA frmServerStatic1");
+       // System.out.println("PRUEBA: SE EJECUTA frmServerStatic1");
         java.awt.EventQueue.invokeLater(() -> {
             new frmServerStatic1().setVisible(true);
         });
