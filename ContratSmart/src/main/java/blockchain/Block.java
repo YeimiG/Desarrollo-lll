@@ -29,6 +29,21 @@ public class Block implements Serializable {
         this.hash = generateHash();
     }
 
+    /*
+        REconstruye un bloque ya minado  comprobar si el hash corrresponde al contenido 
+    */
+    public static Block restaurar(int id, long timeStamp, String previousHash, String hash,
+                                  int nonce, List<SmartContract> contratos) {
+        Block b = new Block(id, previousHash, timeStamp);
+        b.nonce = nonce;
+        if (contratos != null) {
+            b.smartContracts.addAll(contratos);
+        }
+        b.hash = hash;
+        return b;
+    }
+    
+    
     // Calcula el algoritmo criptografico Hash SHA-256 del bloque completo
     public String generateHash() {
        StringBuilder data = new StringBuilder();
@@ -74,7 +89,7 @@ public class Block implements Serializable {
 }
 
 /**
- * Agrega cada campo co su longitud para evitar ambiguedades al concatenar 
+ * Agrega cada campo con su longitud para evitar ambiguedades al concatenar 
  */
 private void appendField(StringBuilder data, String value){
     if (value == null){
