@@ -15,7 +15,7 @@ import java.io.DataOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 /**
- *
+ * 
  * @author owen7
  */
 public class frmServerStatic1 extends javax.swing.JFrame {
@@ -181,7 +181,7 @@ public class frmServerStatic1 extends javax.swing.JFrame {
                     DataInputStream inputStream = new DataInputStream(socket.getInputStream());
                     DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());
                     
-                    String rawMessage = inputStream.readUTF();
+                    String rawMessage = cifrador.desencriptar(inputStream.readUTF());
 
                     if (rawMessage.equalsIgnoreCase("EXIT")) {
                         jTextArea1.append(">> Comando EXIT recibido. Deteniendo Servidor Secundario.\n");
@@ -201,7 +201,7 @@ public class frmServerStatic1 extends javax.swing.JFrame {
                                 if (sc.getIdEmpleado().equals(idCifrado)) {
                                     String nombreDescifrado = cifrador.desencriptar(sc.getNombreEmpleado());
                                     String respuesta = "ENCONTRADO;" + sc.getIdContrato() + ";" + nombreDescifrado + ";" + sc.getSucursal() + ";" + b.getId() + ";" + b.getHash();
-                                    outputStream.writeUTF(respuesta);
+                                    outputStream.writeUTF(cifrador.encriptar(respuesta));
                                     outputStream.flush();
                                     
                                     encontrado = true;
@@ -213,7 +213,8 @@ public class frmServerStatic1 extends javax.swing.JFrame {
                         }
                         
                         if (!encontrado) {
-                            outputStream.writeUTF("NO_ENCONTRADO");
+                          //outputStream.writeUTF("NO_ENCONTRADO");
+                            outputStream.writeUTF(cifrador.encriptar("NO_ENCONTRADO"));
                             outputStream.flush();
                             jTextArea1.append("   - Contrato no encontrado.\n");
                         }
@@ -272,7 +273,8 @@ public class frmServerStatic1 extends javax.swing.JFrame {
                                 + idEmpCifrado + ";"
                                 + nombreCifrado;
 
-                        outputStream.writeUTF(respuesta);
+                        //outputStream.writeUTF(respuesta);
+                        outputStream.writeUTF(cifrador.encriptar(respuesta));
                         outputStream.flush();
 
                         jTextArea1.append("=== REGISTRO GENERAL DE CONTRATACIONES (NODO 2) ===\n");
@@ -293,7 +295,7 @@ public class frmServerStatic1 extends javax.swing.JFrame {
         new Thread(() -> {
             try (Socket socketPeer = new Socket("127.0.0.1", 7000);
                  DataOutputStream outPeer = new DataOutputStream(socketPeer.getOutputStream())) {
-                outPeer.writeUTF("PROPAGAR_BLOQUE;" + bloque.getId() + ";" + bloque.getHash());
+                outPeer.writeUTF(cifrador.encriptar("PROPAGAR_BLOQUE;" + bloque.getId() + ";" + bloque.getHash()));
                 outPeer.flush();
             } catch (Exception e) {
                 System.out.println("Nodo 1 no activo para recibir propagación: " + e.getMessage());
