@@ -234,15 +234,19 @@ public class frmContratos extends javax.swing.JFrame {
         String ipDestino = frmPrincipal.mapaIPs.getOrDefault(sucursal, "127.0.0.1");
 
         // MEJORA: Try-with-resources para asegurar el cierre del Socket
+        blockchain.Cifrado cifrador = new blockchain.Cifrado("ClaveSecretaServidorBlockChain");
+        
         try (Socket socket = new Socket(ipDestino, puertoServidor);
              DataOutputStream out = new DataOutputStream(socket.getOutputStream());
              DataInputStream in = new DataInputStream(socket.getInputStream())) {
             
-            out.writeUTF(mensaje);
+            //encriptado antes de emviar
+            out.writeUTF(cifrador.encriptar(mensaje));
             out.flush();
             
-            String respuesta = in.readUTF();
-            JOptionPane.showMessageDialog(this, "¡Contrato minado y cifrado en la Blockchain con éxito!\n\nDatos del Bloque:\n" + respuesta);
+            String respuesta = cifrador.desencriptar(in.readUTF());
+            JOptionPane.showMessageDialog(this, "¡Contrato minado y cifrado...\n" + respuesta);
+            //JOptionPane.showMessageDialog(this, "¡Contrato minado y cifrado en la Blockchain con éxito!\n\nDatos del Bloque:\n" + respuesta);
             
             jTextField3.setText("");
             jTextField4.setText("");

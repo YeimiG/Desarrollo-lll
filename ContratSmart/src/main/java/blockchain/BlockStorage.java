@@ -22,22 +22,34 @@ public class BlockStorage {
     }
 
     public void saveBlock(Block block, Cifrado cifrador) {
-        try {
-            // Estructura JSON del bloque
-            String jsonRaw = "{\n"
-                + "  \"id\": " + block.getId() + ",\n"
-                + "  \"timeStamp\": " + block.getTimeStamp() + ",\n"
-                + "  \"previousHash\": \"" + block.getPreviousHash() + "\",\n"
-                + "  \"hash\": \"" + block.getHash() + "\",\n"
-                + "  \"nonce\": " + block.getNonce() + "\n"
-                + "}";
-
-            // Encriptar JSON
-            String jsonEncriptado = cifrador.encriptar(jsonRaw);
-
-            // Guardar como <hash>.json
+    try {
+            // Construir el JSON completo incluyendo el arreglo de SmartContracts
+            StringBuilder jsonBuilder = new StringBuilder();
+            jsonBuilder.append("{\n")
+                .append("  \"id\": ").append(block.getId()).append(",\n")
+                .append("  \"timeStamp\": ").append(block.getTimeStamp()).append(",\n")
+                .append("  \"previousHash\": \"").append(block.getPreviousHash()).append("\",\n")
+                .append("  \"hash\": \"").append(block.getHash()).append("\",\n")
+                .append("  \"nonce\": ").append(block.getNonce()).append(",\n")
+                .append("  \"smartContracts\": [");
+            
+            for (int i = 0; i < block.countSmartContracts(); i++) {
+                SmartContract sc = block.getSmartContract(i);
+                jsonBuilder.append("{")
+                    .append("\"idContrato\":\"").append(sc.getIdContrato()).append("\",")
+                    .append("\"idEmpleado\":\"").append(sc.getIdEmpleado()).append("\",")
+                    .append("\"nombreEmpleado\":\"").append(sc.getNombreEmpleado()).append("\",")
+                    .append("\"puesto\":\"").append(sc.getPuesto()).append("\",")
+                    .append("\"salario\":").append(sc.getSalario()).append(",")
+                    .append("\"sucursal\":\"").append(sc.getSucursal()).append("\"}");
+                if (i < block.countSmartContracts() - 1) jsonBuilder.append(",");
+            }
+            jsonBuilder.append("]\n}");
+            
+            // Encriptar JSON y guardar
+            String jsonEncriptado = cifrador.encriptar(jsonBuilder.toString());
             String fileName = FOLDER_PATH + block.getHash() + ".json";
-            try (FileWriter writer = new FileWriter(fileName)) {
+            try (java.io.FileWriter writer = new java.io.FileWriter(fileName)) {
                 writer.write(jsonEncriptado);
             }
         } catch (Exception e) {

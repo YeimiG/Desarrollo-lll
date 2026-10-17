@@ -135,11 +135,12 @@ public class frmWallet extends javax.swing.JFrame {
 
             // 1. Enviar petición formateada de búsqueda cifrada
             String tramaPeticion = "BUSCAR;" + idEmpleado;
-            out.writeUTF(tramaPeticion);
+            //encriptar peticion
+            out.writeUTF(this.cifrador.encriptar(tramaPeticion));
             out.flush();
 
             // 2. Recibir la respuesta enviada por el Servidor seleccionado
-            String respuesta = in.readUTF();
+            String respuesta = this.cifrador.desencriptar(in.readUTF());
 
             if (respuesta.startsWith("ENCONTRADO;")) {
                 String[] partes = respuesta.split(";");
