@@ -139,12 +139,13 @@ public class frmServer extends javax.swing.JFrame {
                         String idBuscado = rawMessage.split(";")[1];
                         jTextArea1.append(">> Buscando contrato en la Blockchain para ID: " + idBuscado + "\n");
                         
-                        String idCifrado = cifrador.encriptar(idBuscado);
+                      //String idCifrado = cifrador.encriptar(idBuscado);
                         boolean encontrado = false;
                         
                         for (Block b : bc.getChain()) {
                             for (SmartContract sc : b.getSmartContracts()) {
-                                if (sc.getIdEmpleado().equals(idCifrado)) {
+                                if (cifrador.desencriptar(sc.getIdEmpleado()).equals(idBuscado.trim())) {
+                    //           if (sc.getIdEmpleado().equals(idCifrado)) {
                                     String nombreDescifrado = cifrador.desencriptar(sc.getNombreEmpleado());
                                     String respuesta = "ENCONTRADO;" + sc.getIdContrato() + ";" + nombreDescifrado + ";" + sc.getSucursal() + ";" + b.getId() + ";" + b.getHash();
                                   //outputStream.writeUTF(respuesta);
@@ -204,6 +205,7 @@ public class frmServer extends javax.swing.JFrame {
                         long tInicio = System.currentTimeMillis();
                         bc.mineBlock(nuevoBloque);
                         long tFin = System.currentTimeMillis();
+                        bc.addProvedBlock(nuevoBloque);
 
                         storage.saveBlock(nuevoBloque, cifrador);
                         jTextArea1.append(">> Bloque persistido en disco: ./blockchain_data/" + nuevoBloque.getHash() + ".json\n");
